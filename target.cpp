@@ -128,7 +128,7 @@ public:
 			if(ea.getButton() == 1 && flagMouse)
 			{
 				GVCoord coord;
-				if( gvcreator->getGeoPosition(ea,aa,coord,mapNode) )
+				if( gvcreator->getGeoPosition(ea,aa,coord,mapNode) )		
 				{
 					std::cout<<coord.lon<<std::endl;
 					tempCoords.push_back(coord);
@@ -193,9 +193,7 @@ int main(int argc, char** argv)
 	root->addChild(editGroup);
 
 	/*annoGroup = new osg::Group();
-	root->addChild(annoGroup);*/
-	
-   
+	root->addChild(annoGroup);*/  
 	
 	//std::vector<GVCoord> coords;
 	std::cout<<tempCoords.size()<<std::endl;
@@ -203,15 +201,12 @@ int main(int argc, char** argv)
 	coords.push_back(GVCoord(30,  50, 0));*/
 	//_lineGeometry.setControlPoints(coords);
 	
-	
-	
-	
-
-
 	viewer->setSceneData(root);
+	
+	viewer->addEventHandler( new osgViewer::WindowSizeHandler );
 	viewer->getCamera()->addCullCallback(new osgEarth::Util::AutoClipPlaneCullCallback(mapNode));
 	viewer->addEventHandler(new UseEventHandler(mapNode)) ; 
-	viewer->run();
-	return 0;
-
+	
+	return viewer->run();
+	
 }

@@ -1,4 +1,5 @@
 #include "LineGeometry.h"
+#include "Bezier.h"
 #include <cmath>
 #include <iostream>
 lineGeometry::lineGeometry()
@@ -41,6 +42,11 @@ void lineGeometry::setControlPoints(std::vector<GVCoord>& vtxBuffer)
 bool lineGeometry::toVertice(std::vector<GVCoord>& vtxBuffer, std::vector<int>* vtxBuffer2 )
 {
 	if(_controlPoints.size() <= 1) return false;
+	Bezier bezier;
+	std::vector<GVCoord> bezierPoints;
+    bezier.getBezier(_controlPoints,&bezierPoints);
+	vtxBuffer = bezierPoints;
+	vtxBuffer2->push_back(bezierPoints.size());
 	/*double x1 = _controlPoints[0].lon;
 	double y1 = _controlPoints[0].lat;
 	double x2 = _controlPoints[1].lon;
@@ -85,7 +91,7 @@ bool lineGeometry::toVertice(std::vector<GVCoord>& vtxBuffer, std::vector<int>* 
 	vtxBuffer2->push_back(3);*/
 
 
-	vtxBuffer = _controlPoints;
-	vtxBuffer2->push_back(_controlPoints.size());
+	/*vtxBuffer = _controlPoints;
+	vtxBuffer2->push_back(_controlPoints.size());*/
 	return true;
 }

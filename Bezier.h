@@ -1,5 +1,6 @@
 #ifndef __BEZIER_H__
 #define __BEZIER_H__
+#include "LineGeometry.h"
 
 class Bezier
 {
