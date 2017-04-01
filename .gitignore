@@ -1,0 +1,15 @@
+
+## filles ##
+*.obj
+*.suo
+*.sdf
+*.opensdf
+
+
+
+## dir ##
+ipch/
+Release/
+Debug/
+
+
