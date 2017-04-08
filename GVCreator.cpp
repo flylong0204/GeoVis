@@ -16,7 +16,7 @@ bool GVCreator::getGeoPosition(const osgGA::GUIEventAdapter& ea, osgGA::GUIActio
 	osgViewer::View* pView = dynamic_cast<osgViewer::View*>(&aa);
 	if(pView == NULL)
 		return false;
-	//const osgEarth::MapNode *node = mapNode;
+	
 	return getGeoPosition(pView, ea.getX(), ea.getY(), coord,mapNode);
 }
 

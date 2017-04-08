@@ -31,7 +31,7 @@ void Bezier::getBezier(const std::vector<GVCoord>& controlPoints, std::vector<GV
 	std::vector<double> lon_interpolation;
 	if(num >= 2)
 	{
-		for(int i = 1,j=0; i < num; i++,j++)
+		for(int i = 1,j=0; i <= num-1; i++,j++)
 		{
 			double lon_inter = tempControlPoints[i].lon - tempControlPoints[i-1].lon;
 			lon_interpolation.push_back(lon_inter);
