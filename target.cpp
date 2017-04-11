@@ -122,13 +122,14 @@ public:
 
 	virtual bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& aa)
 	{
+
 		switch(ea.getEventType())
 		{
 		case osgGA::GUIEventAdapter::PUSH:
 			if(ea.getButton() == 1 && flagMouse)
 			{
 				GVCoord coord;
-				if( gvcreator->getGeoPosition(ea,aa,coord,mapNode) )		
+				if( mapNode != NULL &&gvcreator->getGeoPosition(ea,aa,coord,mapNode) )		
 				{
 					std::cout<<coord.lon<<std::endl;
 					tempCoords.push_back(coord);
