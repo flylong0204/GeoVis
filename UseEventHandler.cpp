@@ -40,6 +40,7 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 		if(ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
 		{
 			_gvLineCreator->handle(ea,view,myMapNode);
+			myEditGroup->removeChild(0,myEditGroup->getNumChildren());
 			isStartAnno = false;
 		}
 		else if(isNew && ea.getButton() == 1) //第一次画标直接添加
@@ -77,9 +78,10 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 	if(ea.getButton() == 2)
 	{
 		osg::ref_ptr<osgGA::GUIEventAdapter> event = new osgGA::GUIEventAdapter(ea);
-		event->setX((ea.getXmin()+ea.getXmax())*0.5);
+		std::cout<<pick(ea.getX(),ea.getY())<<std::endl;
+		/*event->setX((ea.getXmin()+ea.getXmax())*0.5);
 		event->setY((ea.getYmin()+ea.getYmax())*0.5);
-		std::cout<<pick(event->getX(),event->getY())<<std::endl;
+		std::cout<<pick(event->getX(),event->getY())<<std::endl;*/
 	}
 
 	return false;
@@ -99,11 +101,26 @@ int UseEventHandler::pick(float x, float y)
 		{
 			const osgEarth::IntersectionPicker::Hit& hit = *h;
 			osgEarth::Util::AnnotationNode* anno = picker.getNode<osgEarth::Util::AnnotationNode>(hit);
-			osg::Group* p = dynamic_cast<osg::Group*>(anno);
-			unsigned int i = myAnnoGroup->getChildIndex(p);
+			osgEarth::Annotation::FeatureNode* p = dynamic_cast<osgEarth::Annotation::FeatureNode*>(anno);
+			int i = myAnnoGroup->getChildIndex(p->getParent(0));
 		    return i;
 		}
 	}
-	return 0;
+	return -1;
 }
 
+int UseEventHandler::pick1(float x, float y)
+{
+	osgUtil::LineSegmentIntersector::Intersections intersections; 
+	if (myViewer->computeIntersections(x, y, intersections)) 
+	{
+		for(osgUtil::LineSegmentIntersector::Intersections::iterator hitr = intersections.begin(); hitr != intersections.end(); ++hitr) 
+		{
+			if (!hitr->nodePath.empty() && !(hitr->nodePath.back()->getName().empty())) 
+			{
+				
+
+			}
+		}
+	}
+}

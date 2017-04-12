@@ -12,6 +12,7 @@ public:
 
 	virtual bool handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAdapter& aa);
     int pick(float x, float y);
+	int pick1(float x, float y);
 
 public:
 	unsigned int childNumOfAnnoGroup;
