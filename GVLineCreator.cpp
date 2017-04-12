@@ -36,8 +36,6 @@ public:
 		osg::AutoTransform *at = new osg::AutoTransform;
 		at->setAutoScaleToScreen(true);
 		at->addChild(geode);
-
-		/*******************************************/
 		{
 			
 			const osgEarth::SpatialReference *srs = mapNode->getMapSRS();

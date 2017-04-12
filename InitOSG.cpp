@@ -35,6 +35,8 @@ int main(int argc, char** argv)
 	osg::Group* annoGroup = new osg::Group();
 	root->addChild(annoGroup);
 
+	osg::Group* editGroup = new osg::Group();
+	root->addChild(editGroup);
 	
 
 	viewer->setSceneData(root);
@@ -42,7 +44,7 @@ int main(int argc, char** argv)
 	viewer->addEventHandler( new osgViewer::WindowSizeHandler );
 	viewer->addEventHandler( new osgViewer::StatsHandler);
 	viewer->getCamera()->addCullCallback(new osgEarth::Util::AutoClipPlaneCullCallback(mapNode));
-	viewer->addEventHandler(new UseEventHandler(mapNode,annoGroup,viewer)) ; 
+	viewer->addEventHandler(new UseEventHandler(mapNode,annoGroup,viewer,editGroup)) ; 
 
 	
 

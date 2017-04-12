@@ -80,17 +80,21 @@
   <ItemGroup>
     <ClCompile Include="Bezier.cpp" />
     <ClCompile Include="Coord.cpp" />
+    <ClCompile Include="GV01.cpp" />
     <ClCompile Include="GVLineCreator.cpp" />
     <ClCompile Include="InitOSG.cpp" />
     <ClCompile Include="LineGeometry.cpp" />
+    <ClCompile Include="LineStyle.cpp" />
     <ClCompile Include="UseEventHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Bezier.h" />
     <ClInclude Include="Coord.h" />
+    <ClInclude Include="GV01.h" />
     <ClInclude Include="GVLineCreator.h" />
     <ClInclude Include="InitOSG.h" />
     <ClInclude Include="LineGeometry.h" />
+    <ClInclude Include="LineStyle.h" />
     <ClInclude Include="UseEventHandler.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
