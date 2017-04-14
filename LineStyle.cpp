@@ -6,7 +6,7 @@ osg::Group* LineStyle::drawLine(osgEarth::MapNode* mapNode,LineGeometry* line)
 	osg::Group* annoGroup = new osg::Group();
 	Style geomStyle;
 	geomStyle.getOrCreate<LineSymbol>()->stroke()->color() = Color::Red;
-	geomStyle.getOrCreate<LineSymbol>()->stroke()->width() = 5.0f;
+	geomStyle.getOrCreate<LineSymbol>()->stroke()->width() = 3.0f;
 	geomStyle.getOrCreate<LineSymbol>()->stroke()->widthUnits() = osgEarth::Symbology::Units::PIXELS;
 	geomStyle.getOrCreate<LineSymbol>()->tessellation() = 200.0f;
 	geomStyle.getOrCreate<AltitudeSymbol>()->clamping() = AltitudeSymbol::CLAMP_TO_TERRAIN;
@@ -30,7 +30,7 @@ osg::Group* LineStyle::drawLine(osgEarth::MapNode* mapNode,LineGeometry* line)
 
 			osg::ref_ptr<osgEarth::Features::Feature> feature = new osgEarth::Features::Feature(geoms,mapNode->getMapSRS(),geomStyle);
 			osg::ref_ptr<osgEarth::Annotation::FeatureNode> gnode = new osgEarth::Annotation::FeatureNode(mapNode,feature);
-			gnode->getOrCreateStateSet()->setMode(GL_DEPTH_TEST,osg::StateAttribute::ON|osg::StateAttribute::OVERRIDE);
+			gnode->getOrCreateStateSet()->setMode(GL_DEPTH_TEST,osg::StateAttribute::OFF|osg::StateAttribute::PROTECTED);
 			annoGroup->addChild( gnode );
 		}
 	}

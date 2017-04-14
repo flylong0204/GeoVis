@@ -1,13 +1,11 @@
 #include "UseEventHandler.h"
-#include "InitOSG.h"
-#include "LineGeometry.h"
-#include "GV01.h"
-#include "LineStyle.h"
+#include "DraggerPositionChanged.h"
 
 #include "osgEarth/IntersectionPicker"
 
 LineGeometry *myLine;
 LineStyle *myLineStyle = new LineStyle();
+DraggerPositionChanged * myDraggerPositionChanged = new DraggerPositionChanged();
 
 GVLineCreator* _gvLineCreator = new GVLineCreator();
 UseEventHandler::UseEventHandler(){
@@ -22,7 +20,11 @@ UseEventHandler::UseEventHandler(osgEarth::MapNode* mapNode, osg::Group* annoGro
 	this->myEditGroup = editGroup;
 	childNumOfAnnoGroup = 0;
 	isStartAnno = false;
-
+	lockDoubleClick = true;
+	isSelect = false;
+	indexOfLine = 0;
+	indexOfPoint = 0;
+	isSelectPoint = false;
 }
 
 
@@ -39,29 +41,35 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 		
 		if(ea.getButtonMask() & osgGA::GUIEventAdapter::RIGHT_MOUSE_BUTTON)
 		{
-			_gvLineCreator->handle(ea,view,myMapNode);
-			myEditGroup->removeChild(0,myEditGroup->getNumChildren());
-			isStartAnno = false;
+			if(_gvLineCreator->handle(ea,view,myMapNode))
+			{
+				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
+				isStartAnno = false;
+			}
 		}
 		else if(isNew && ea.getButton() == 1) //第一次画标直接添加
 		{
-			_gvLineCreator->handle(ea,view,myMapNode);
-			isNew = false;
-			myEditGroup->addChild(_gvLineCreator->_controlPointShow.get());//新图标
-			myLine->setControlPoints(_gvLineCreator->_curCoords);
-			myAnnoGroup->addChild(myLineStyle->drawLine(myMapNode,myLine));
-			
-			
-			childNumOfAnnoGroup++;
-
+			if(_gvLineCreator->handle(ea,view,myMapNode))
+			{
+				isNew = false;
+				myEditGroup->addChild(_gvLineCreator->_controlPointShow.get());//新图标
+				myLine->setControlPoints(_gvLineCreator->_curCoords);
+				myAnnoGroup->addChild(myLineStyle->drawLine(myMapNode,myLine));
+				childNumOfAnnoGroup++;
+				
+				LineGeometry *p = myLine;
+				lineAddress.push_back(p);
+			}
 		}
 		else if(!isNew && ea.getButton() == 1)
 		{
-			_gvLineCreator->handle(ea,view,myMapNode);
-			myEditGroup->setChild(childNumOfAnnoGroup-1,_gvLineCreator->_controlPointShow.get());
-			myLine->setControlPoints(_gvLineCreator->_curCoords);
-			myAnnoGroup->setChild(childNumOfAnnoGroup-1,myLineStyle->drawLine(myMapNode,myLine));
-
+			if(_gvLineCreator->handle(ea,view,myMapNode))
+			{
+				myEditGroup->setChild(childNumOfAnnoGroup-1,_gvLineCreator->_controlPointShow.get());
+				myLine->setControlPoints(_gvLineCreator->_curCoords);
+				myAnnoGroup->setChild(childNumOfAnnoGroup-1,myLineStyle->drawLine(myMapNode,myLine));
+			}
+			
 		}
 		return true;
 
@@ -71,26 +79,98 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 	{
 		isStartAnno = true;
 		isNew = true;
-		myLine =new GV01();
+		myLine =new GV02();
+		return true;
 
 	}
 	/*********鼠标双击状态处理*****************/
-	if(ea.getButton() == 2)
+	if(ea.getButton() == 2 && lockDoubleClick)
 	{
-		osg::ref_ptr<osgGA::GUIEventAdapter> event = new osgGA::GUIEventAdapter(ea);
-		std::cout<<pick(ea.getX(),ea.getY())<<std::endl;
-		/*event->setX((ea.getXmin()+ea.getXmax())*0.5);
-		event->setY((ea.getYmin()+ea.getYmax())*0.5);
-		std::cout<<pick(event->getX(),event->getY())<<std::endl;*/
+		//osg::ref_ptr<osgGA::GUIEventAdapter> event = new osgGA::GUIEventAdapter(ea);
+		if(pickLine(ea.getX(),ea.getY()) != -1)
+		{
+			indexOfLine = pickLine(ea.getX(),ea.getY());
+			lockDoubleClick = false;
+			isSelect = true;
+			LineGeometry* line = lineAddress[indexOfLine];
+			std::vector<GVCoord> controlPoints;
+			line->getControlPoints(controlPoints);
+			myDraggerPositionChanged->CreatControlPonitsShow(controlPoints,myMapNode,myEditGroup);
+			
+
+			
+		}
+		return true;
 	}
 
+	if(osgGA::GUIEventAdapter::DRAG == ea.getEventType() && isSelect )
+	{
+		if(pickPoint(ea.getX(),ea.getY()) != -1)
+		{
+			isSelectPoint = true;
+			indexOfPoint = pickPoint(ea.getX(),ea.getY());
+			GVCoord coord;
+			osgUtil::LineSegmentIntersector::Intersections intersection;
+			view->computeIntersections(ea.getX(),ea.getY(),intersection);
+			osgUtil::LineSegmentIntersector::Intersections::iterator iter = intersection.begin();
+			if(iter != intersection.end())
+			{
+				osg::Vec3d geoPt;
+				const osgEarth::SpatialReference *srs = myMapNode->getMapSRS();
+				srs->transformFromWorld(iter->getWorldIntersectPoint(),geoPt);
+				coord.lon = geoPt.x();
+				coord.lat = geoPt.y();
+				coord.alt = geoPt.z();
+			}
+			LineGeometry* line = lineAddress[indexOfLine];
+			line->setControlPoint(indexOfPoint,coord);
+			myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+			myDraggerPositionChanged->updateDraggerPosition(indexOfPoint,coord,myMapNode,myEditGroup);
+		}
+		else if(isSelectPoint)
+		{
+			GVCoord coord;
+			osgUtil::LineSegmentIntersector::Intersections intersection;
+			view->computeIntersections(ea.getX(),ea.getY(),intersection);
+			osgUtil::LineSegmentIntersector::Intersections::iterator iter = intersection.begin();
+			if(iter != intersection.end())
+			{
+				osg::Vec3d geoPt;
+				const osgEarth::SpatialReference *srs = myMapNode->getMapSRS();
+				srs->transformFromWorld(iter->getWorldIntersectPoint(),geoPt);
+				coord.lon = geoPt.x();
+				coord.lat = geoPt.y();
+				coord.alt = geoPt.z();
+			}
+			LineGeometry* line = lineAddress[indexOfLine];
+			line->setControlPoint(indexOfPoint,coord);
+			myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+			std::vector<GVCoord> controlPoints;
+			line->getControlPoints(controlPoints);
+		}
+		return true;
+	}
+
+	else if(osgGA::GUIEventAdapter::RELEASE == ea.getEventType())
+	{
+		isSelectPoint = false;
+	}
+	/********鼠标单击取消选中************/
+	else if(ea.getButton() == 4 && (!lockDoubleClick))
+	{
+
+		lockDoubleClick = true;
+		isSelect = false;
+		myEditGroup->removeChild(0,myEditGroup->getNumChildren());
+		return true;
+	}
 	return false;
 
 }
 
-int UseEventHandler::pick(float x, float y)
+int UseEventHandler::pickLine(float x, float y)
 {
-	osgEarth::IntersectionPicker picker(myViewer,myAnnoGroup, ~0, 5, osgEarth::IntersectionPicker::LIMIT_ONE_PER_DRAWABLE);
+	osgEarth::IntersectionPicker picker(myViewer, myAnnoGroup, ~0, 5, osgEarth::IntersectionPicker::LIMIT_ONE_PER_DRAWABLE);
 	osgEarth::IntersectionPicker::Hits hits;
 
 
@@ -100,8 +180,9 @@ int UseEventHandler::pick(float x, float y)
 		if(h != hits.end())
 		{
 			const osgEarth::IntersectionPicker::Hit& hit = *h;
-			osgEarth::Util::AnnotationNode* anno = picker.getNode<osgEarth::Util::AnnotationNode>(hit);
-			osgEarth::Annotation::FeatureNode* p = dynamic_cast<osgEarth::Annotation::FeatureNode*>(anno);
+			//osgEarth::Util::AnnotationNode* anno = picker.getNode<osgEarth::Util::AnnotationNode>(hit);
+			//osgEarth::Annotation::FeatureNode* p = dynamic_cast<osgEarth::Annotation::FeatureNode*>(anno);
+			osgEarth::Annotation::FeatureNode* p= picker.getNode<osgEarth::Annotation::FeatureNode>(hit);
 			int i = myAnnoGroup->getChildIndex(p->getParent(0));
 		    return i;
 		}
@@ -109,18 +190,22 @@ int UseEventHandler::pick(float x, float y)
 	return -1;
 }
 
-int UseEventHandler::pick1(float x, float y)
-{
-	osgUtil::LineSegmentIntersector::Intersections intersections; 
-	if (myViewer->computeIntersections(x, y, intersections)) 
-	{
-		for(osgUtil::LineSegmentIntersector::Intersections::iterator hitr = intersections.begin(); hitr != intersections.end(); ++hitr) 
-		{
-			if (!hitr->nodePath.empty() && !(hitr->nodePath.back()->getName().empty())) 
-			{
-				
 
-			}
+
+int UseEventHandler::pickPoint(float x, float y)
+{
+	osgEarth::IntersectionPicker picker(myViewer,myEditGroup, ~0, 5, osgEarth::IntersectionPicker::LIMIT_ONE_PER_DRAWABLE);
+	osgEarth::IntersectionPicker::Hits hits;
+	if (picker.pick(x, y, hits))
+	{
+		osgEarth::IntersectionPicker::Hits::const_iterator h = hits.begin();
+		if(h != hits.end())
+		{
+			const osgEarth::IntersectionPicker::Hit& hit = *h;
+			osg::MatrixTransform* anno = picker.getNode<osg::MatrixTransform>(hit);
+			return myEditGroup->getChildIndex(anno);
+			
 		}
 	}
+	return -1;
 }
