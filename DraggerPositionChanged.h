@@ -15,6 +15,7 @@ public:
 	~DraggerPositionChanged();
 	void CreatControlPonitsShow(std::vector<GVCoord> vtxBuffer,osgEarth::MapNode* mapNode,osg::Group* editGroup);
 	void updateDraggerPosition(int idx,const GVCoord coord,osgEarth::MapNode* mapNode,osg::Group* editGroup);
+	bool getCenterControlPoint(const std::vector<GVCoord> vtxBuffer,GVCoord &coord);
 };
 
 #endif

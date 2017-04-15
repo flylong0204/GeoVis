@@ -83,7 +83,7 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 		return true;
 
 	}
-	/*********鼠标双击状态处理*****************/
+	/*********鼠标*****************/
 	if(ea.getButton() == 2 && lockDoubleClick)
 	{
 		//osg::ref_ptr<osgGA::GUIEventAdapter> event = new osgGA::GUIEventAdapter(ea);
@@ -96,9 +96,6 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 			std::vector<GVCoord> controlPoints;
 			line->getControlPoints(controlPoints);
 			myDraggerPositionChanged->CreatControlPonitsShow(controlPoints,myMapNode,myEditGroup);
-			
-
-			
 		}
 		return true;
 	}
@@ -109,44 +106,126 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 		{
 			isSelectPoint = true;
 			indexOfPoint = pickPoint(ea.getX(),ea.getY());
-			GVCoord coord;
-			osgUtil::LineSegmentIntersector::Intersections intersection;
-			view->computeIntersections(ea.getX(),ea.getY(),intersection);
-			osgUtil::LineSegmentIntersector::Intersections::iterator iter = intersection.begin();
-			if(iter != intersection.end())
-			{
-				osg::Vec3d geoPt;
-				const osgEarth::SpatialReference *srs = myMapNode->getMapSRS();
-				srs->transformFromWorld(iter->getWorldIntersectPoint(),geoPt);
-				coord.lon = geoPt.x();
-				coord.lat = geoPt.y();
-				coord.alt = geoPt.z();
-			}
 			LineGeometry* line = lineAddress[indexOfLine];
-			line->setControlPoint(indexOfPoint,coord);
-			myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
-			myDraggerPositionChanged->updateDraggerPosition(indexOfPoint,coord,myMapNode,myEditGroup);
+			if(indexOfPoint < line->getControlPointCount()) //拖动控制点
+			{
+				GVCoord coord;
+				osgUtil::LineSegmentIntersector::Intersections intersection;
+				view->computeIntersections(ea.getX(),ea.getY(),intersection);
+				osgUtil::LineSegmentIntersector::Intersections::iterator iter = intersection.begin();
+				if(iter != intersection.end())
+				{
+					osg::Vec3d geoPt;
+					const osgEarth::SpatialReference *srs = myMapNode->getMapSRS();
+					srs->transformFromWorld(iter->getWorldIntersectPoint(),geoPt);
+					coord.lon = geoPt.x();
+					coord.lat = geoPt.y();
+					coord.alt = geoPt.z();
+				}
+
+				line->setControlPoint(indexOfPoint,coord);
+				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+				std::vector<GVCoord> controlPoints;
+				line->getControlPoints(controlPoints);
+				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
+				myDraggerPositionChanged->CreatControlPonitsShow(controlPoints,myMapNode,myEditGroup);
+			}
+			else if(indexOfPoint == line->getControlPointCount()) //拖动平移点
+			{
+				GVCoord coord;
+				osgUtil::LineSegmentIntersector::Intersections intersection;
+				view->computeIntersections(ea.getX(),ea.getY(),intersection);
+				osgUtil::LineSegmentIntersector::Intersections::iterator iter = intersection.begin();
+				if(iter != intersection.end())
+				{
+					osg::Vec3d geoPt;
+					const osgEarth::SpatialReference *srs = myMapNode->getMapSRS();
+					srs->transformFromWorld(iter->getWorldIntersectPoint(),geoPt);
+					coord.lon = geoPt.x();
+					coord.lat = geoPt.y();
+					coord.alt = geoPt.z();
+				}
+				std::vector<GVCoord> controlPoints;
+				line->getControlPoints(controlPoints);
+				GVCoord centerCoord;
+				if(myDraggerPositionChanged->getCenterControlPoint(controlPoints,centerCoord))
+				{
+					for(int i = 0; i < controlPoints.size(); i++)
+					{
+						controlPoints[i].lon += (coord.lon - centerCoord.lon);
+						controlPoints[i].lat += (coord.lat - centerCoord.lat);
+						//controlPoints[i].alt += (coord.alt - centerCoord.alt);
+					}
+				}
+				line->setControlPoints(controlPoints);
+				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
+				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+				myDraggerPositionChanged->CreatControlPonitsShow(controlPoints,myMapNode,myEditGroup);
+
+			}
+			
 		}
 		else if(isSelectPoint)
 		{
-			GVCoord coord;
-			osgUtil::LineSegmentIntersector::Intersections intersection;
-			view->computeIntersections(ea.getX(),ea.getY(),intersection);
-			osgUtil::LineSegmentIntersector::Intersections::iterator iter = intersection.begin();
-			if(iter != intersection.end())
-			{
-				osg::Vec3d geoPt;
-				const osgEarth::SpatialReference *srs = myMapNode->getMapSRS();
-				srs->transformFromWorld(iter->getWorldIntersectPoint(),geoPt);
-				coord.lon = geoPt.x();
-				coord.lat = geoPt.y();
-				coord.alt = geoPt.z();
-			}
+			
+			//indexOfPoint = pickPoint(ea.getX(),ea.getY());
 			LineGeometry* line = lineAddress[indexOfLine];
-			line->setControlPoint(indexOfPoint,coord);
-			myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
-			std::vector<GVCoord> controlPoints;
-			line->getControlPoints(controlPoints);
+			if(indexOfPoint < line->getControlPointCount()) //拖动控制点
+			{
+				GVCoord coord;
+				osgUtil::LineSegmentIntersector::Intersections intersection;
+				view->computeIntersections(ea.getX(),ea.getY(),intersection);
+				osgUtil::LineSegmentIntersector::Intersections::iterator iter = intersection.begin();
+				if(iter != intersection.end())
+				{
+					osg::Vec3d geoPt;
+					const osgEarth::SpatialReference *srs = myMapNode->getMapSRS();
+					srs->transformFromWorld(iter->getWorldIntersectPoint(),geoPt);
+					coord.lon = geoPt.x();
+					coord.lat = geoPt.y();
+					coord.alt = geoPt.z();
+				}
+
+				line->setControlPoint(indexOfPoint,coord);
+				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+				std::vector<GVCoord> controlPoints;
+				line->getControlPoints(controlPoints);
+				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
+				myDraggerPositionChanged->CreatControlPonitsShow(controlPoints,myMapNode,myEditGroup);
+			}
+			else if(indexOfPoint == line->getControlPointCount()) //拖动平移点
+			{
+				GVCoord coord;
+				osgUtil::LineSegmentIntersector::Intersections intersection;
+				view->computeIntersections(ea.getX(),ea.getY(),intersection);
+				osgUtil::LineSegmentIntersector::Intersections::iterator iter = intersection.begin();
+				if(iter != intersection.end())
+				{
+					osg::Vec3d geoPt;
+					const osgEarth::SpatialReference *srs = myMapNode->getMapSRS();
+					srs->transformFromWorld(iter->getWorldIntersectPoint(),geoPt);
+					coord.lon = geoPt.x();
+					coord.lat = geoPt.y();
+					coord.alt = geoPt.z();
+				}
+				std::vector<GVCoord> controlPoints;
+				line->getControlPoints(controlPoints);
+				GVCoord centerCoord;
+				if(myDraggerPositionChanged->getCenterControlPoint(controlPoints,centerCoord))
+				{
+					for(int i = 0; i < controlPoints.size(); i++)
+					{
+						controlPoints[i].lon += (coord.lon - centerCoord.lon);
+						controlPoints[i].lat += (coord.lat - centerCoord.lat);
+						//controlPoints[i].alt += (coord.alt - centerCoord.alt);
+					}
+				}
+				line->setControlPoints(controlPoints);
+				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
+				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+				myDraggerPositionChanged->CreatControlPonitsShow(controlPoints,myMapNode,myEditGroup);
+
+			}
 		}
 		return true;
 	}
@@ -154,6 +233,7 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 	else if(osgGA::GUIEventAdapter::RELEASE == ea.getEventType())
 	{
 		isSelectPoint = false;
+		return true;
 	}
 	/********鼠标单击取消选中************/
 	else if(ea.getButton() == 4 && (!lockDoubleClick))
