@@ -83,7 +83,7 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 		return true;
 
 	}
-	/*********鼠标*****************/
+	/*********鼠标选中某个标绘*****************/
 	if(ea.getButton() == 2 && lockDoubleClick)
 	{
 		//osg::ref_ptr<osgGA::GUIEventAdapter> event = new osgGA::GUIEventAdapter(ea);
@@ -99,6 +99,20 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 		}
 		return true;
 	}
+
+	//删除选中线标
+
+	if( (ea.getKey() == 'd' || ea.getKey() == 'D') && isSelect)
+	{
+		isSelect = false;
+		lockDoubleClick = true;
+		 myAnnoGroup->removeChild(indexOfLine);
+		 myEditGroup->removeChild(0,myEditGroup->getNumChildren());
+		 std::vector<LineGeometry*>::iterator it = lineAddress.begin()+indexOfLine;
+		 lineAddress.erase(it);
+		 return true;
+	}
+
 
 	if(osgGA::GUIEventAdapter::DRAG == ea.getEventType() && isSelect )
 	{
