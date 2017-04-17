@@ -45,7 +45,7 @@ void Bezier::getBezier(const std::vector<GVCoord>& controlPoints, std::vector<GV
 			tempControlPoints[i].lon = tempControlPoints[i-1].lon + lon_interpolation[j];
 		}
 	}
-	int size = 50;
+	int size = 40;
 	for(int index=0; index <= tempControlPoints.size()-4; index += 3)
 	{
 		//计算贝塞尔曲线上的点（3阶）

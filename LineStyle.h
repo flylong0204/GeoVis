@@ -9,7 +9,7 @@ using namespace osgEarth::Features;
 class LineStyle
 {
 public:
-	osg::Group* drawLine(osgEarth::MapNode* mapNode,LineGeometry* line);
+	osg::Group* drawLine(osgEarth::MapNode* mapNode,LineGeometry* line,bool &lock);
 };
 
 #endif

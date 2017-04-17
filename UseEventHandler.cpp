@@ -25,6 +25,7 @@ UseEventHandler::UseEventHandler(osgEarth::MapNode* mapNode, osg::Group* annoGro
 	indexOfLine = 0;
 	indexOfPoint = 0;
 	isSelectPoint = false;
+	lock = true;
 }
 
 
@@ -54,8 +55,8 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 				isNew = false;
 				myEditGroup->addChild(_gvLineCreator->_controlPointShow.get());//新图标
 				myLine->setControlPoints(_gvLineCreator->_curCoords);
-				myAnnoGroup->addChild(myLineStyle->drawLine(myMapNode,myLine));
-				childNumOfAnnoGroup++;
+				myAnnoGroup->addChild(myLineStyle->drawLine(myMapNode,myLine,lock));
+				//childNumOfAnnoGroup++;
 				
 				LineGeometry *p = myLine;
 				lineAddress.push_back(p);
@@ -65,9 +66,9 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 		{
 			if(_gvLineCreator->handle(ea,view,myMapNode))
 			{
-				myEditGroup->setChild(childNumOfAnnoGroup-1,_gvLineCreator->_controlPointShow.get());
+				myEditGroup->setChild(0,_gvLineCreator->_controlPointShow.get());
 				myLine->setControlPoints(_gvLineCreator->_curCoords);
-				myAnnoGroup->setChild(childNumOfAnnoGroup-1,myLineStyle->drawLine(myMapNode,myLine));
+				myAnnoGroup->setChild(myAnnoGroup->getNumChildren()-1,myLineStyle->drawLine(myMapNode,myLine,lock));
 			}
 			
 		}
@@ -79,7 +80,7 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 	{
 		isStartAnno = true;
 		isNew = true;
-		myLine =new GV02();
+		myLine =new GV01();
 		return true;
 
 	}
@@ -114,10 +115,11 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 	}
 
 
-	if(osgGA::GUIEventAdapter::DRAG == ea.getEventType() && isSelect )
+	if(osgGA::GUIEventAdapter::DRAG == ea.getEventType() && isSelect && lock)
 	{
 		if(pickPoint(ea.getX(),ea.getY()) != -1)
 		{
+			lock = false;
 			isSelectPoint = true;
 			indexOfPoint = pickPoint(ea.getX(),ea.getY());
 			LineGeometry* line = lineAddress[indexOfLine];
@@ -138,7 +140,11 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 				}
 
 				line->setControlPoint(indexOfPoint,coord);
-				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+			
+				{
+					myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line,lock));
+				}
+				
 				std::vector<GVCoord> controlPoints;
 				line->getControlPoints(controlPoints);
 				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
@@ -173,7 +179,10 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 				}
 				line->setControlPoints(controlPoints);
 				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
-				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+				
+				{
+					myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line,lock));
+				}
 				myDraggerPositionChanged->CreatControlPonitsShow(controlPoints,myMapNode,myEditGroup);
 
 			}
@@ -183,6 +192,7 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 		{
 			
 			//indexOfPoint = pickPoint(ea.getX(),ea.getY());
+			lock = false;
 			LineGeometry* line = lineAddress[indexOfLine];
 			if(indexOfPoint < line->getControlPointCount()) //拖动控制点
 			{
@@ -201,7 +211,7 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 				}
 
 				line->setControlPoint(indexOfPoint,coord);
-				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line,lock));
 				std::vector<GVCoord> controlPoints;
 				line->getControlPoints(controlPoints);
 				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
@@ -236,7 +246,7 @@ bool UseEventHandler::handle(const osgGA::GUIEventAdapter& ea,osgGA::GUIActionAd
 				}
 				line->setControlPoints(controlPoints);
 				myEditGroup->removeChild(0,myEditGroup->getNumChildren());
-				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line));
+				myAnnoGroup->setChild(indexOfLine,myLineStyle->drawLine(myMapNode,line,lock));
 				myDraggerPositionChanged->CreatControlPonitsShow(controlPoints,myMapNode,myEditGroup);
 
 			}

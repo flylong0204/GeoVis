@@ -35,6 +35,8 @@ private:
 	std::vector<LineGeometry*> lineAddress; //存放线表函数指针
 	int indexOfLine;
 	int indexOfPoint;
+	bool lock;
+	int time;
 };
 
 
